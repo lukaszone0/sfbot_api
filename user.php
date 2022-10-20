@@ -43,7 +43,6 @@ class user{
         switch($oko->act){
 
             case "AccountLogin":
-            case "accountlogin":
 				
                 if(!isset($oko->login) or !isset($oko->pass) or empty($oko->login) or empty($oko->pass)){
                     $resp->message = "missing login and password";
@@ -74,7 +73,6 @@ class user{
             break;
 
             case "PlayerAdventureStart":
-            case "playeradventurestart":
 
 				if(isset($oko->questid)){
 					$questid = $oko->questid;
@@ -108,7 +106,6 @@ class user{
             break;
 
             case "PlayerAdventureFinished":
-            case "playeradventurefinished":
 
 				if(!isset($oko->skiptype)){
 					$resp->message = "missing skip type";
@@ -171,7 +168,7 @@ class user{
                 $pattern = Pattern::PlayerWorkStart(array("ssid" => $oko->ssid, "hours" => $oko->hours));
 				
                 $crypted = Crypto::encrypt($pattern, $oko->cryptokey);
-                //$crypted = substr($crypted, 0, 86);
+                $crypted = substr($crypted, 0, 86);
 				$ret = Socket::send("http://" . $this->server, $oko->cryptoid . "" . $crypted, $oko->c);
                 if(isset($ret['success'])){
                     $resp->requeststatus = "success";
@@ -196,23 +193,75 @@ class user{
                 $crypted = substr($crypted, 0, 86);
 				$ret = Socket::send("http://" . $this->server, $oko->cryptoid . "" . $crypted, $oko->c);
 
-                if(isset($ret['success'])){
+                if(isset($ret['success']) or !isset($ret['error'])){
                     $resp->requeststatus = "success";
                     $resp->message = "success";
                     if(isset($ret['ownplayersave'])){
                         $this->loaduserdata($ret['ownplayersave']);
                         $resp = $this;
                         $resp->requeststatus = "success";
+                        $resp->timestamp = (int) $ret['timestamp'];
                     }
                 }
 				else if(isset($ret['error'])){
 					$resp->message = $ret['error'];
 				}
-                else if(isset($ret['timestamp'])){
-                    $resp->message = "success";
+
+            break;
+
+            case "PlayerWorkFinished":
+                
+                $pattern = Pattern::PlayerWorkFinished(array("ssid" => $oko->ssid));
+				
+                $crypted = Crypto::encrypt($pattern, $oko->cryptokey);
+                $crypted = substr($crypted, 0, 86);
+				$ret = Socket::send("http://" . $this->server, $oko->cryptoid . "" . $crypted, $oko->c);
+
+                if(isset($ret['success']) OR !isset($ret['error'])){
                     $resp->requeststatus = "success";
-                    $resp->timestamp = (int) $ret['timestamp'];
+                    $resp->message = "success";
+                    if(isset($ret['ownplayersave'])){
+                        $this->loaduserdata($ret['ownplayersave']);
+                        $resp = $this;
+                        $resp->requeststatus = "success";
+                        $resp->workreward = $ret['workreward'];
+                        $resp->timestamp = (int) $ret['timestamp'];
+                    }
                 }
+				else if (isset($ret['error'])){
+					$resp->message = $ret['error'];
+				}
+
+
+            break;
+
+            case "PlayerAdventureStop":
+            case "PlayerWorkStop":
+                if($oko->act == "PlayerAdventureStop"){
+                    $pattern = Pattern::PlayerAdventureStop(array("ssid" => $oko->ssid));
+                }
+                else if($oko->act == "PlayerWorkStop"){
+                    $pattern = Pattern::PlayerWorkStop(array("ssid" => $oko->ssid));
+                }
+                
+				
+                $crypted = Crypto::encrypt($pattern, $oko->cryptokey);
+                $crypted = substr($crypted, 0, 86);
+				$ret = Socket::send("http://" . $this->server, $oko->cryptoid . "" . $crypted, $oko->c);
+
+                if(isset($ret['success']) OR !isset($ret['error'])){
+                    $resp->requeststatus = "success";
+                    $resp->message = "success";
+                    if(isset($ret['ownplayersave'])){
+                        $this->loaduserdata($ret['ownplayersave']);
+                        $resp = $this;
+                        $resp->requeststatus = "success";
+                        $resp->timestamp = (int) $ret['timestamp'];
+                    }
+                }
+				else if (isset($ret['error'])){
+					$resp->message = $ret['error'];
+				}
 
             break;
 
@@ -253,7 +302,7 @@ class user{
 		//$this->timestamp = (int) $playersave[2];
 		
 		
-		$this->status = (int) ($playersave[45]) > 3 ? ((int) $playersave[45] - 2355285196800) : (int) $playersave[45];
+		$this->status = (int) ($playersave[45]) > 3 ? ($playersave[45] - 2700302876672) : (int) $playersave[45];
 		$this->statusextra = (int) ($playersave[46]) > 10 ? ($playersave[46] - 2700302876672) : (int) $playersave[46];
 		//$this->statustime = (int) ($playersave[47] - 7200) >= 0 ? ($playersave[47] - 7200) : 0;
 		$this->statustime = (int) $playersave[47];
