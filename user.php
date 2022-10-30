@@ -3,8 +3,8 @@
 class user{
 
     public $server = "";
-    private $password = "";
-    private $c = 0;
+    public $password = "";
+    public $c = 0;
     public $ssid = 0;
 
     public function init($oko){
@@ -60,10 +60,13 @@ class user{
 				}
 				else if(isset($ret['ownplayersave'])){
 
+                    $this->timestamp = (int) $ret['timestamp'];
 					$this->loaduserdata($ret['ownplayersave'], $oko->act);
 					$this->ssid = $ret['sessionid'];
                     $this->login = $oko->login;
-                    $this->timestamp = (int) $ret['timestamp'];
+
+                    
+                    
 					$resp = $this;
                     $resp->cryptoid = $ret['cryptoid'];
 					$resp->cryptokey = $ret['cryptokey'];
@@ -93,7 +96,11 @@ class user{
 				else if(isset($ret['ownplayersave'])){
 					$this->loaduserdata($ret['ownplayersave'], $oko->act);
 					$resp = $this;
+                    $resp->status = 2;
+                    $resp->statustime = $this->quests[$oko->questid -1]['time'] + $ret['timestamp'];
+                    $resp->statusextra = $oko->questid;
 					$resp->requeststatus = "success";
+                    $resp->timestamp = $ret['timestamp'];
 				}
                 else if(isset($ret['success'])){
                     $resp->requeststatus = "success";
@@ -177,6 +184,10 @@ class user{
                 else if(isset($ret['ownplayersave'])){
 					$this->loaduserdata($ret['ownplayersave']);
                     $resp = $this;
+                    $resp->status = 1;
+                    $resp->statustime = $ret['timestamp'] + (3600 * $oko->hours);
+                    $resp->statusextra = $oko->hours;
+
 					$resp->requeststatus = "success";
 				}
                 else if(isset($ret['error'])){
@@ -302,10 +313,23 @@ class user{
 		//$this->timestamp = (int) $playersave[2];
 		
 		
-		$this->status = (int) ($playersave[45]) > 3 ? ($playersave[45] - 2700302876672) : (int) $playersave[45];
+        //echo ($playersave[45]);
+
+        ///2355285196800
+
+        
+		$this->status = (int) ($playersave[45]) > 3 ? ($playersave[45] - 2700302876672) : $playersave[45];
 		$this->statusextra = (int) ($playersave[46]) > 10 ? ($playersave[46] - 2700302876672) : (int) $playersave[46];
+
+        if($this->statusextra == 0){
+            $this->status = 0;
+        }
+
 		//$this->statustime = (int) ($playersave[47] - 7200) >= 0 ? ($playersave[47] - 7200) : 0;
+
 		$this->statustime = (int) $playersave[47];
+
+
         if(isset($playersave[456])){
             $this->thirst = (int) $playersave[456];
         }
